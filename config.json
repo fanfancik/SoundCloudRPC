@@ -9,6 +9,6 @@
   "small_icons_enabled": true,
   "play_icon_asset": "play_icon",
   "pause_icon_asset": "pause_icon",
-  "github_url": "",
+  "github_url": "https://github.com/fanfancik/SoundCloudRPC",
   "console_color": "red"
 }
