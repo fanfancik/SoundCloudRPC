@@ -1,0 +1,16 @@
+# Личные профили Chrome — содержат куки и сессию SoundCloud, НЕ заливать!
+chrome_debug_profile/
+chrome_profile/
+
+# Лог с историей твоего прослушивания — тоже личное
+soundcloud_rpc.log
+
+# Ярлыки Windows — внутри хранится полный локальный путь с именем
+# твоей учётки Windows
+*.lnk
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
