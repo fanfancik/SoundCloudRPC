@@ -2,6 +2,11 @@
 chrome_debug_profile/
 chrome_profile/
 
+# Мусор от сборки PyInstaller (сам .exe оставляем)
+build/
+dist/
+*.spec
+
 # Лог с историей твоего прослушивания — тоже личное
 soundcloud_rpc.log
 
