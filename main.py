@@ -1,43 +1,48 @@
 """
 main.py
 SoundCloud -> Discord Rich Presence, с иконкой в трее.
-
+ 
 Запускается через pythonw (без консоли вообще) — поэтому логи пишутся
 в файл soundcloud_rpc.log, а не только на экран. Пункт "Show App (лог)"
 в трее открывает этот файл.
-
+ 
 Если нужно увидеть работу вживую — запусти debug_console.bat
 (там используется обычный python.exe с видимым окном).
 """
-
+ 
 import importlib
 import os
 import subprocess
 import sys
 import time
-
+ 
 APP_TAG = "[SoundCloudRPC]"
 APP_VERSION = "1.1.0"
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if getattr(sys, "frozen", False):
+    # Запущено как собранный .exe (PyInstaller) — берём папку самого exe,
+    # а не временную папку распаковки, чтобы config.json и лог лежали рядом.
+    SCRIPT_DIR = os.path.dirname(sys.executable)
+else:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH = os.path.join(SCRIPT_DIR, "soundcloud_rpc.log")
-
-
+ 
+ 
 def _write_log_file(msg: str):
     try:
         with open(LOG_PATH, "a", encoding="utf-8") as f:
             f.write(f"[{time.strftime('%H:%M:%S')}] {msg}\n")
     except Exception:
         pass
-
-
+ 
+ 
 def _plain_log(msg: str):
     try:
         print(f"{APP_TAG} -> {msg}")
     except Exception:
         pass
     _write_log_file(msg)
-
-
+ 
+ 
 def ensure_dependencies():
     """Проверяет, что все нужные библиотеки установлены, и ставит недостающие."""
     checks = {
@@ -53,10 +58,10 @@ def ensure_dependencies():
             importlib.import_module(module_name)
         except ImportError:
             to_install.append(pip_spec)
-
+ 
     if not to_install:
         return
-
+ 
     _plain_log(f"Устанавливаю недостающие библиотеки: {', '.join(to_install)}")
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", *to_install])
@@ -65,26 +70,26 @@ def ensure_dependencies():
         _plain_log("Попробуй вручную: pip install -r requirements.txt")
         sys.exit(1)
     _plain_log("Библиотеки установлены.")
-
-
+ 
+ 
 ensure_dependencies()
-
+ 
 import json
 import platform
 import re
 import threading
 import webbrowser
-
+ 
 from pypresence import Presence
 from pypresence import exceptions as pypresence_exceptions
 from pypresence.types import ActivityType
-
+ 
 if sys.platform == "win32":
     try:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-
+ 
 try:
     import colorama
     from colorama import Fore, Style
@@ -102,27 +107,27 @@ except ImportError:
     COLOR_MAP = {}
     GREEN = YELLOW = RESET = ""
     TRAY_COLORS_AVAILABLE = False
-
+ 
 from soundcloud import SoundCloudMonitor, default_chrome_binary_path
-
+ 
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
-
-
+ 
+ 
 def load_config() -> dict:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
-
-
+ 
+ 
 try:
     _early_config = load_config()
 except Exception:
     _early_config = {}
-
+ 
 _tag_color = COLOR_MAP.get(_early_config.get("console_color", "red"), COLOR_MAP.get("red", ""))
 APP_TAG_COLORED = f"{_tag_color}[SoundCloudRPC]{RESET}"
 IS_WINDOWS = platform.system() == "Windows"
 FORCE_CONSOLE = "--console" in sys.argv
-
+ 
 STATUS_MESSAGES = {
     "no_target": "Вкладка SoundCloud не найдена. Открой soundcloud.com в "
                  "Chrome, запущенном через start_chrome_debug.",
@@ -132,8 +137,8 @@ STATUS_MESSAGES = {
     "title_missing": "Плеер найден, но не удалось определить название трека.",
     "exception": "Непредвиденная ошибка при чтении страницы SoundCloud.",
 }
-
-
+ 
+ 
 def log(msg: str):
     try:
         print(f"{APP_TAG_COLORED} -> {msg}")
@@ -141,8 +146,8 @@ def log(msg: str):
         pass
     clean = re.sub(r"\x1b\[[0-9;]*m", "", msg)
     _write_log_file(clean)
-
-
+ 
+ 
 def truncate(text, limit: int = 128) -> str:
     if not text:
         return ""
@@ -150,22 +155,22 @@ def truncate(text, limit: int = 128) -> str:
     if len(text) > limit:
         text = text[: limit - 1] + "…"
     return text
-
-
+ 
+ 
 # ---------- автозагрузка (Windows) ----------
-
+ 
 def _startup_bat_path():
     startup_dir = os.path.join(
         os.environ.get("APPDATA", ""), "Microsoft", "Windows",
         "Start Menu", "Programs", "Startup",
     )
     return os.path.join(startup_dir, "SoundCloudRPC.bat")
-
-
+ 
+ 
 def is_autostart_enabled() -> bool:
     return IS_WINDOWS and os.path.exists(_startup_bat_path())
-
-
+ 
+ 
 def set_autostart(enabled: bool):
     if not IS_WINDOWS:
         log(f"{YELLOW}Автозагрузка пока поддерживается только на Windows.{RESET}")
@@ -180,10 +185,10 @@ def set_autostart(enabled: bool):
         if os.path.exists(path):
             os.remove(path)
         log(f"{GREEN}Убрано из автозагрузки.{RESET}")
-
-
+ 
+ 
 # ---------- Discord ----------
-
+ 
 def connect_to_discord(client_id: str) -> Presence:
     rpc = Presence(client_id)
     attempt = 0
@@ -199,8 +204,8 @@ def connect_to_discord(client_id: str) -> Presence:
         except pypresence_exceptions.PyPresenceException as e:
             log(f"{YELLOW}Не удалось подключиться к Discord: {e}. Повтор через 3с...{RESET}")
             time.sleep(3)
-
-
+ 
+ 
 def update_presence(rpc: Presence, payload: dict):
     try:
         rpc.update(**payload)
@@ -213,27 +218,27 @@ def update_presence(rpc: Presence, payload: dict):
                 f"Обнови: pip install --upgrade pypresence{RESET}")
         else:
             raise
-
-
+ 
+ 
 # ---------- фоновый поток: вся работа с Discord/Chrome ----------
-
+ 
 def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
     client_id = config.get("discord_client_id")
     update_interval = config.get("update_interval", 5)
     small_icons = config.get("small_icons_enabled", False)
     play_icon = config.get("play_icon_asset")
     pause_icon = config.get("pause_icon_asset")
-
+ 
     configured_chrome = config.get("chrome_binary_path")
     chrome_binary_path = (
         configured_chrome if configured_chrome and os.path.exists(configured_chrome)
         else default_chrome_binary_path()
     )
-
+ 
     log("Подключаюсь к Discord...")
     rpc = connect_to_discord(client_id)
     log(f"{GREEN}Подключено к Discord.{RESET}")
-
+ 
     monitor = SoundCloudMonitor(
         chrome_binary_path=chrome_binary_path,
         debug_profile_path=config.get("debug_profile_path", "./chrome_debug_profile"),
@@ -244,23 +249,23 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
     monitor.start()
     log(f"{GREEN}Готово. Запускай трек в SoundCloud в браузере.{RESET}")
     status_holder["ready"] = True
-
+ 
     last_rpc_state = None
     last_track_key = None
     last_status = None
     consecutive_failures = 0
-
+ 
     try:
         while not stop_event.is_set():
             data = monitor.get_now_playing()
             status = monitor.last_status
-
+ 
             if status != last_status:
                 if status != "ok" and status in STATUS_MESSAGES:
                     extra = f" ({monitor.last_error})" if status == "ws_failed" and monitor.last_error else ""
                     log(f"{YELLOW}{STATUS_MESSAGES[status]}{extra}{RESET}")
                 last_status = status
-
+ 
             if not data:
                 if last_rpc_state is not None:
                     rpc.clear()
@@ -268,11 +273,11 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
                     last_track_key = None
                 _sleep_interruptible(update_interval, stop_event)
                 continue
-
+ 
             title = truncate(data["title"])
             artist = truncate(data["artist"])
             position, duration, is_playing = data["position"], data["duration"], data["is_playing"]
-
+ 
             track_key = (title, artist)
             if track_key != last_track_key:
                 log(f"{GREEN}Выбран трек: {title} — {artist}{RESET}")
@@ -281,34 +286,34 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
                     log(f"{YELLOW}Обложка не найдена. Если так происходит для "
                         f"любого трека — пришли мне этот кусок HTML для починки:{RESET}")
                     log(monitor.artwork_debug_html)
-
+ 
             now = time.time()
             start_ts = int(now - position)
             end_ts = int(start_ts + duration) if duration else None
-
+ 
             payload = {
                 "activity_type": ActivityType.LISTENING,
                 "details": title,
                 "state": artist,
             }
-
+ 
             # Если у трека нет своей обложки — просто не передаём large_image,
             # Discord сам подставит иконку приложения (это нормально, а не
             # баг — у части треков автор не грузил обложку вообще).
             if data["artwork_url"]:
                 payload["large_image"] = data["artwork_url"]
-
+ 
             if small_icons and play_icon and pause_icon:
                 payload["small_image"] = play_icon if is_playing else pause_icon
                 payload["small_text"] = "Играет" if is_playing else "Пауза"
-
+ 
             if is_playing and duration:
                 payload["start"] = start_ts
                 payload["end"] = end_ts
-
+ 
             if data.get("track_url"):
                 payload["buttons"] = [{"label": "Открыть в SoundCloud", "url": data["track_url"]}]
-
+ 
             state_key = (title, artist, is_playing, duration)
             if state_key != last_rpc_state:
                 try:
@@ -327,7 +332,7 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
                         rpc = connect_to_discord(client_id)
                         log(f"{GREEN}Переподключено к Discord.{RESET}")
                         consecutive_failures = 0
-
+ 
             _sleep_interruptible(update_interval, stop_event)
     finally:
         try:
@@ -336,17 +341,17 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
         except Exception:
             pass
         monitor.stop()
-
-
+ 
+ 
 def _sleep_interruptible(seconds: float, stop_event: threading.Event):
     slept = 0.0
     while slept < seconds and not stop_event.is_set():
         time.sleep(0.5)
         slept += 0.5
-
-
+ 
+ 
 # ---------- трей ----------
-
+ 
 def tray_libs_available() -> bool:
     try:
         import pystray  # noqa: F401
@@ -354,8 +359,8 @@ def tray_libs_available() -> bool:
         return True
     except ImportError:
         return False
-
-
+ 
+ 
 def open_log_file():
     try:
         if not os.path.exists(LOG_PATH):
@@ -366,8 +371,8 @@ def open_log_file():
             webbrowser.open(f"file://{LOG_PATH}")
     except Exception as e:
         log(f"{YELLOW}Не удалось открыть лог: {e}{RESET}")
-
-
+ 
+ 
 def open_settings():
     try:
         if IS_WINDOWS:
@@ -377,40 +382,40 @@ def open_settings():
         log("Настройки открыты. После изменений сделай Restart в трее.")
     except Exception as e:
         log(f"{YELLOW}Не удалось открыть настройки: {e}{RESET}")
-
-
+ 
+ 
 def run_tray(config: dict, stop_event: threading.Event, worker: threading.Thread) -> bool:
     """Возвращает True, если нужно перезапустить процесс."""
     import pystray
     from PIL import Image
-
-    icon_path = os.path.join(SCRIPT_DIR, "icon.png")
+ 
+    icon_path = os.path.join(SCRIPT_DIR, "assets", "icon.png")
     image = Image.open(icon_path) if os.path.exists(icon_path) else Image.new("RGB", (64, 64), (220, 38, 38))
-
+ 
     restart_requested = {"flag": False}
-
+ 
     def on_show(icon, item):
         open_log_file()
-
+ 
     def on_restart(icon, item):
         restart_requested["flag"] = True
         stop_event.set()
         icon.stop()
-
+ 
     def on_toggle_autostart(icon, item):
         set_autostart(not is_autostart_enabled())
-
+ 
     def on_github(icon, item):
         url = config.get("github_url")
         if url:
             webbrowser.open(url)
         else:
             log(f"{YELLOW}github_url пока не указан в config.json.{RESET}")
-
+ 
     def on_quit(icon, item):
         stop_event.set()
         icon.stop()
-
+ 
     menu = pystray.Menu(
         pystray.MenuItem("Show App (лог)", on_show),
         pystray.MenuItem("Настройки", lambda icon, item: open_settings()),
@@ -419,9 +424,9 @@ def run_tray(config: dict, stop_event: threading.Event, worker: threading.Thread
         pystray.MenuItem("GitHub", on_github),
         pystray.MenuItem("Quit", on_quit),
     )
-
+ 
     icon = pystray.Icon("SoundCloudRPC", image, "SoundCloudRPC", menu)
-
+ 
     try:
         icon.run()  # блокирует до icon.stop()
     except Exception as e:
@@ -431,12 +436,12 @@ def run_tray(config: dict, stop_event: threading.Event, worker: threading.Thread
                 time.sleep(1)
         except KeyboardInterrupt:
             pass
-
+ 
     stop_event.set()
     worker.join(timeout=5)
     return restart_requested["flag"]
-
-
+ 
+ 
 def run_console_mode(worker: threading.Thread, stop_event: threading.Event):
     try:
         while worker.is_alive():
@@ -445,46 +450,46 @@ def run_console_mode(worker: threading.Thread, stop_event: threading.Event):
         log("Завершение работы...")
         stop_event.set()
         worker.join(timeout=5)
-
-
+ 
+ 
 def main():
     log(f"Запуск... (v{APP_VERSION})")
     config = load_config()
-
+ 
     client_id = config.get("discord_client_id")
     if not client_id or client_id == "YOUR_DISCORD_CLIENT_ID":
         log(f"{YELLOW}Укажи discord_client_id в config.json{RESET}")
         sys.exit(1)
-
+ 
     stop_event = threading.Event()
     status_holder = {"ready": False}
-
+ 
     worker = threading.Thread(target=worker_main, args=(config, stop_event, status_holder), daemon=True)
     worker.start()
-
+ 
     while not status_holder["ready"] and worker.is_alive():
         time.sleep(0.2)
-
+ 
     if not worker.is_alive():
         log(f"{YELLOW}Не удалось запуститься. Смотри лог: {LOG_PATH}{RESET}")
         return
-
+ 
     want_tray = config.get("tray_enabled", True) and IS_WINDOWS and not FORCE_CONSOLE
-
+ 
     if want_tray and not tray_libs_available():
         log(f"{YELLOW}Библиотеки трея недоступны — работаю в обычной консоли.{RESET}")
         want_tray = False
-
+ 
     if want_tray:
         want_restart = run_tray(config, stop_event, worker)
         if want_restart:
             python = sys.executable
             os.execv(python, [python] + sys.argv)
         return
-
+ 
     log("Работаю в консоли. Ctrl+C для выхода.")
     run_console_mode(worker, stop_event)
-
-
+ 
+ 
 if __name__ == "__main__":
     main()
