@@ -5,7 +5,7 @@
 <h1 align="center">SoundCloudRPC</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-red">
+  <img src="https://img.shields.io/badge/version-1.1.2-red">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey">
   <img src="https://img.shields.io/badge/python-3.9%2B-blue">
 </p>
