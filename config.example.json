@@ -1,0 +1,16 @@
+{
+  "discord_client_id": "1520997345171476621",
+  "chrome_binary_path": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+  "debug_profile_path": "./chrome_debug_profile",
+  "debug_port": 9222,
+  "soundcloud_url": "https://soundcloud.com",
+  "update_interval": 5,
+  "tray_enabled": true,
+  "small_icons_enabled": true,
+  "play_icon_asset": "https://raw.githubusercontent.com/fanfancik/SoundCloudRPC/main/assets/play_icon.png",
+  "pause_icon_asset": "https://raw.githubusercontent.com/fanfancik/SoundCloudRPC/main/assets/pause_icon.png",
+  "badge_repo_base": "https://raw.githubusercontent.com/fanfancik/SoundCloudRPC/main/assets/badges",
+  "accent_color": "classic",
+  "github_url": "",
+  "console_color": "red"
+}

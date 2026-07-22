@@ -5,7 +5,7 @@
 <h1 align="center">SoundCloudRPC</h1>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.1.0-red">
+  <img src="https://img.shields.io/badge/version-1.1.2-red">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey">
   <img src="https://img.shields.io/badge/python-3.9%2B-blue">
 </p>
@@ -32,11 +32,25 @@
 
 ### Установка
 
-1. Установи [Python 3.9+](https://www.python.org/downloads/) и [Google Chrome](https://www.google.com/chrome/).
-2. Скачай этот репозиторий.
-3. Запусти `run.bat` (Windows) — всё остальное сделает само.
+1. Скачай `SoundCloudRPC.exe` из этого репозитория.
+2. Установи Google Chrome, если ещё не установлен (рекомендуется — 
+   с другими Chromium-браузерами не тестировалось).
+3. Просто запусти `SoundCloudRPC.exe`. Всё остальное (Chrome с debug-портом, 
+   зависимости и т.д.) программа настроит сама при первом запуске.
+4. Открой soundcloud.com в открывшемся окне Chrome и включи любой трек.
+5. Приложение свернётся в трей — оттуда доступны настройки и лог.
 
-Для Linux/macOS: `./start_chrome_debug.sh`, затем `python3 main.py`.
+### Что нового в этой версии
+
+- Мастер настроек в трее (пункт «Настройки») — теперь открывается меню 
+  с диагностикой и починкой, разбором проблем с обложками и выбором 
+  цвета иконки play/pause.
+- Исправлена пауза: раньше при паузе трека время в статусе могло 
+  показывать случайные числа — теперь показывается точная позиция, 
+  на которой остановлен трек.
+- Вместо стандартной ноты 🎵 в статусе теперь можно выбрать свою иконку 
+  play/pause (в том числе классические красные).
+- Повышена надёжность определения обложки трека.
 
 ### ⚠️ О текущем состоянии проекта
 
@@ -59,11 +73,26 @@ A small Windows / Linux / macOS app that grabs whatever's currently playing in a
 
 ### Installation
 
-1. Install [Python 3.9+](https://www.python.org/downloads/) and [Google Chrome](https://www.google.com/chrome/).
-2. Download this repo.
-3. Run `run.bat` (Windows) — everything else is handled automatically.
+1. Download `SoundCloudRPC.exe` from this repository.
+2. Install Google Chrome if you don't have it yet (recommended — other 
+   Chromium-based browsers haven't been tested).
+3. Just run `SoundCloudRPC.exe`. Everything else (Chrome with a debug 
+   port, dependencies, etc.) is set up automatically on first launch.
+4. Open soundcloud.com in the Chrome window that opens and play any track.
+5. The app minimizes to the system tray — settings and logs are 
+   available from there.
 
-For Linux/macOS: `./start_chrome_debug.sh`, then `python3 main.py`.
+### What's new in this version
+
+- A settings wizard accessible from the tray ("Settings") — opens a menu 
+  with diagnostics/repair, artwork troubleshooting, and play/pause icon 
+  color selection.
+- Fixed pause handling: previously, pausing a track could show random 
+  numbers in the Discord status — now it shows the exact position where 
+  the track was paused.
+- Instead of the default music note 🎵, you can now pick your own 
+  play/pause icon in the status (including the classic red ones).
+- Improved reliability of artwork detection.
 
 ### ⚠️ Current state
 
