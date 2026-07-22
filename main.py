@@ -376,15 +376,21 @@ def worker_main(config: dict, stop_event: threading.Event, status_holder: dict):
             # позицию текстом — это единственный способ показать "где именно
             # остановлено", потому что сам прогресс-бар Discord всегда либо
             # тикает от start к end, либо не показывается вовсе.
-            payload["start"] = None
-            payload["end"] = None
+            # ВАЖНО про паузу: раньше при паузе мы вообще не слали start/end.
+            # Оказалось, что в этом случае Discord у части зрителей сам
+            # показывает "сколько времени висит статус без обновления" —
+            # отсюда и вылезали растущие числа вроде "5:03:24", никак не
+            # связанные с длительностью трека. Чтобы такого не было, при
+            # паузе шлём "нулевое окно" — start и end равны одному и тому
+            # же моменту. Тогда полоса не ползёт и не растёт, просто стоит
+            # на месте, и никакого лишнего текста рядом не появляется.
             if is_playing and duration:
                 payload["start"] = start_ts
                 payload["end"] = end_ts
-            elif not is_playing:
-                pos_text = format_time(position)
-                dur_text = f"/{format_time(duration)}" if duration else ""
-                payload["state"] = f"{artist} · ⏸ {pos_text}{dur_text}"
+            else:
+                frozen_ts = int(now)
+                payload["start"] = frozen_ts
+                payload["end"] = frozen_ts
 
             if data.get("track_url"):
                 payload["buttons"] = [{"label": "Открыть в SoundCloud", "url": data["track_url"]}]
